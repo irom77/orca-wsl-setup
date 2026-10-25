@@ -14,6 +14,16 @@ Notes for the Orca Linux runtime used by the Orca client on Windows.
 - Tailscale address: private; use the current address shown by `tailscale status --self`.
 - Runtime port: `6768`
 
+The Windows client version above is the last version verified on this machine, not a live value. To check the installed Windows version from PowerShell:
+
+```powershell
+Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' |
+  Where-Object { $_.DisplayName -eq 'Orca' } |
+  Select-Object -ExpandProperty DisplayVersion
+```
+
+When the Windows client changes, update its version here. The WSL CLI version is separate; check it in Ubuntu with `~/.local/bin/orca-ide --version`.
+
 The Windows client is paired to this runtime already. The pairing URL contains a device token and should be treated like a password. Do not put the URL, token, or other pairing secrets in this document, shell history, or shared logs. The service uses `--no-pairing`, so a normal restart does not create a new pairing offer.
 
 ## Managed service
