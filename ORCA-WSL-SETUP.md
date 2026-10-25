@@ -9,7 +9,8 @@ Notes for the Orca Linux runtime used by the Orca client on Windows.
 - Orca CLI: `~/.local/bin/orca-ide`
 - Orca profile: `~/.config/orca`
 - Runtime: Electron
-- Version at last check: `1.4.227`
+- Windows Orca client version at last check: `1.4.240`
+- WSL Orca CLI version at last check: `1.4.227`
 - Tailscale address: private; use the current address shown by `tailscale status --self`.
 - Runtime port: `6768`
 
