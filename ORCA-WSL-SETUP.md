@@ -10,7 +10,7 @@ Notes for the Orca Linux runtime used by the Orca client on Windows.
 - Orca profile: `~/.config/orca`
 - Runtime: Electron
 - Windows Orca client version at last check: `1.4.240`
-- WSL Orca CLI version at last check: `1.4.227`
+- WSL Orca CLI version at last check: `1.4.240`
 - Tailscale address: private; use the current address shown by `tailscale status --self`.
 - Runtime port: `6768`
 
@@ -25,6 +25,8 @@ Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*', 
 When the Windows client changes, update its version here. The WSL CLI version is separate; check it in Ubuntu with `~/.local/bin/orca-ide --version`.
 
 The Windows client is paired to this runtime already. The pairing URL contains a device token and should be treated like a password. Do not put the URL, token, or other pairing secrets in this document, shell history, or shared logs. The service uses `--no-pairing`, so a normal restart does not create a new pairing offer.
+
+The Orca Mobile companion is paired through Orca Relay. Mobile pairing is separate from the Windows client's runtime pairing. Do not record mobile pairing links or tokens here.
 
 ## Managed service
 
@@ -87,6 +89,12 @@ Check in this order:
 5. **Is Tailscale connected?** Check `tailscale status --self`; from Ubuntu, `tailscale ping zenbook` has reached the Windows peer on this machine.
 6. **Inspect recent logs:** `journalctl --user -u orca-server.service -n 50 --no-pager`.
 
+### Orca Mobile says to update Orca on Ubuntu WSL
+
+The mobile app and Orca host use a versioned protocol. If the host is too old, Mobile blocks access and asks you to update Orca on the computer. Check the WSL install with `~/.local/bin/orca-ide --version`; do not rely on the Windows client version as a proxy. After updating and restarting the service, refresh the host in Orca Mobile. If the warning remains, Orca's [mobile troubleshooting guidance](https://www.onorca.dev/docs/mobile) says to remove the host and pair it again.
+
+On Oct 25, 2026, the WSL runtime was updated from `1.4.227` to `1.4.240`, matching the Windows client. The existing mobile Relay pairing and Orca profile were preserved.
+
 ### If `systemctl --user` says “Failed to connect to bus”
 
 This happened on Oct 24, 2026. The user manager `user@1000.service` had been killed, leaving the user D-Bus socket behind but refusing connections. The Orca service unit itself was intact. From the Ubuntu shell, restore the user manager, then start Orca:
@@ -136,6 +144,29 @@ ORCA_SERVE_RUNTIME=electron ~/.local/bin/orca-ide serve \
 ```
 
 This can print a pairing URL with a device token. Handle its output as a secret. Avoid starting a manual server while the service is running, since both need port 6768. Do not disable `--no-pairing` on the managed service just to restart it; use the manual command only when a new pairing offer is actually needed.
+
+## Update the manually extracted Linux AppImage
+
+This WSL install runs the AppImage extracted into `~/.local/opt/orca-app/squashfs-root`; `~/.local/bin/orca-ide` points into that directory. Updating only the downloaded AppImage file does not update the running service. Download the current `orca-linux.AppImage` from the [official Orca GitHub release](https://github.com/stablyai/orca/releases), verify it against the release's `latest-linux.yml` SHA-512 metadata, and extract it in a temporary directory:
+
+```bash
+chmod +x ./orca-linux.AppImage
+mkdir -p /tmp/orca-app-update
+cd /tmp/orca-app-update
+/path/to/orca-linux.AppImage --appimage-extract
+```
+
+After confirming the extracted CLI reports the intended version, stop the service, preserve the old extracted tree, move the new `squashfs-root` into place, and restart:
+
+```bash
+systemctl --user stop orca-server.service
+mv ~/.local/opt/orca-app/squashfs-root ~/.local/opt/orca-app/squashfs-root.previous
+mv /tmp/orca-app-update/squashfs-root ~/.local/opt/orca-app/squashfs-root
+systemctl --user start orca-server.service
+~/.local/bin/orca-ide --version
+```
+
+Verify the listener and local HTTP probe using the health checks above. Keep the previous tree until the Windows and mobile clients reconnect; to roll back, stop the service, move the new tree aside, restore `squashfs-root.previous` to `squashfs-root`, and start the service.
 
 ## Start coding assistants from Orca
 
