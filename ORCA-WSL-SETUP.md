@@ -137,6 +137,29 @@ ORCA_SERVE_RUNTIME=electron ~/.local/bin/orca-ide serve \
 
 This can print a pairing URL with a device token. Handle its output as a secret. Avoid starting a manual server while the service is running, since both need port 6768. Do not disable `--no-pairing` on the managed service just to restart it; use the manual command only when a new pairing offer is actually needed.
 
+## Start coding assistants from Orca
+
+Run these commands in an Orca terminal opened in the desired WSL project or worktree. Authenticate Claude Code first if it has not been authenticated in this WSL environment.
+
+### Claude Code
+
+```bash
+claude auth login
+claude --dangerously-skip-permissions --remote-control
+```
+
+### Codex CLI
+
+```bash
+codex --yolo --sandbox danger-full-access
+```
+
+### Gemini CLI
+
+```bash
+gemini --model gemini-3.8-flash
+```
+
 ## Last recovery record
 
 On Oct 25, 2026, the Windows client showed “Remote runtime disconnected.” The Orca service had stopped listening after the systemd user manager was killed on Oct 24. Starting `user@1000.service` restored the user D-Bus; enabling and starting `orca-server.service` brought Orca back. Verification succeeded with an active service, a listener on all interfaces at port `6768`, HTTP `200` on localhost, and a successful Tailscale ping to the Windows peer. The Windows client then reconnected without pairing again.
