@@ -26,7 +26,7 @@ When the Windows client changes, update its version here. The WSL CLI version is
 
 The Windows client is paired to this runtime already. The pairing URL contains a device token and should be treated like a password. Do not put the URL, token, or other pairing secrets in this document, shell history, or shared logs. The service uses `--no-pairing`, so a normal restart does not create a new pairing offer.
 
-The Orca Mobile companion is paired through Orca Relay. Mobile pairing is separate from the Windows client's runtime pairing. Do not record mobile pairing links or tokens here.
+The Orca Mobile companion is paired through Orca Relay. Mobile pairing is separate from the Windows client's runtime pairing. Do not record mobile pairing links or tokens here. Mobile successfully opened this WSL workspace after the WSL runtime was updated to match the Windows client at version `1.4.240`.
 
 ## Managed service
 
@@ -94,6 +94,8 @@ Check in this order:
 The mobile app and Orca host use a versioned protocol. If the host is too old, Mobile blocks access and asks you to update Orca on the computer. Check the WSL install with `~/.local/bin/orca-ide --version`; do not rely on the Windows client version as a proxy. After updating and restarting the service, refresh the host in Orca Mobile. If the warning remains, Orca's [mobile troubleshooting guidance](https://www.onorca.dev/docs/mobile) says to remove the host and pair it again.
 
 On Oct 25, 2026, the WSL runtime was updated from `1.4.227` to `1.4.240`, matching the Windows client. The existing mobile Relay pairing and Orca profile were preserved.
+
+Confirmed: after that update, Orca Mobile opened the WSL workspace successfully. Keep the Windows client and WSL runtime on the same Orca version; verify the installed Windows version before updating WSL.
 
 ### If `systemctl --user` says “Failed to connect to bus”
 
