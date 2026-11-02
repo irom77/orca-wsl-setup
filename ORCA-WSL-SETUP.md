@@ -86,8 +86,35 @@ Check in this order:
 2. **Is the service active?** Run `systemctl --user status orca-server.service --no-pager -l`.
 3. **Is port 6768 listening?** Run `ss -ltnp '( sport = :6768 )'`.
 4. **Does Orca answer locally?** Run the `curl` health check above.
-5. **Is Tailscale connected?** Check `tailscale status --self`; from Ubuntu, `tailscale ping zenbook` has reached the Windows peer on this machine.
+5. **Is Tailscale connected?** Check `tailscale status --self`; from Ubuntu, `tailscale ping zenbook` has reached the Windows peer on this machine. If it reports `peer's node key has expired`, see [Tailscale node key expired](#tailscale-node-key-expired).
 6. **Inspect recent logs:** `journalctl --user -u orca-server.service -n 50 --no-pager`.
+
+### Tailscale node key expired
+
+On Nov 1, 2026, the Windows client could not reconnect even though the WSL runtime was healthy (service active, port `6768` listening, HTTP `200` locally and on the Tailscale address). The cause was an expired Tailscale node key on the Windows peer; the iPad and `irom-SEi` keys expired the same day. The WSL node's own key was still valid.
+
+Symptoms from Ubuntu:
+
+```bash
+tailscale ping zenbook          # "peer's node key has expired"
+tailscale status --json | python3 -c 'import json,sys;d=json.load(sys.stdin);[print(p["HostName"],p.get("KeyExpiry"),p.get("Expired")) for p in d["Peer"].values()]'
+```
+
+On Windows, `tailscale status` printed `Logged out.` The tray app (`tailscale-ipn.exe`) was already running but appeared not to open; its icon can be hidden in the system-tray overflow. If the app will not open, start the login from the CLI instead (from Ubuntu via WSL interop or from PowerShell):
+
+```bash
+powershell.exe -NoProfile -Command '& "C:\Program Files\Tailscale\tailscale.exe" login'
+```
+
+Open the printed `login.tailscale.com` URL and sign in with the usual account. Treat the URL as short-lived and private; do not record it here. Then verify:
+
+```bash
+tailscale ping zenbook
+powershell.exe -NoProfile -Command "(Test-NetConnection -ComputerName $(tailscale ip -4) -Port 6768 -WarningAction SilentlyContinue).TcpTestSucceeded"
+ss -tn '( sport = :6768 )'      # established connections mean the client reconnected
+```
+
+The Windows client reconnected without pairing again. Re-authenticate other expired devices (such as the iPad for Orca Mobile) the same way in their Tailscale apps. To prevent recurrence, disable key expiry for these machines in the Tailscale admin console (Machines → ⋯ → Disable key expiry).
 
 ### Orca Mobile says to update Orca on Ubuntu WSL
 
@@ -194,6 +221,8 @@ gemini --model gemini-3.8-flash
 ```
 
 ## Last recovery record
+
+On Nov 1, 2026, the Windows client could not reconnect because the Windows Tailscale node key had expired and the node was logged out. Logging in again with `tailscale.exe login` restored connectivity; the WSL runtime needed no changes. See [Tailscale node key expired](#tailscale-node-key-expired).
 
 On Oct 25, 2026, the Windows client showed “Remote runtime disconnected.” The Orca service had stopped listening after the systemd user manager was killed on Oct 24. Starting `user@1000.service` restored the user D-Bus; enabling and starting `orca-server.service` brought Orca back. Verification succeeded with an active service, a listener on all interfaces at port `6768`, HTTP `200` on localhost, and a successful Tailscale ping to the Windows peer. The Windows client then reconnected without pairing again.
 
